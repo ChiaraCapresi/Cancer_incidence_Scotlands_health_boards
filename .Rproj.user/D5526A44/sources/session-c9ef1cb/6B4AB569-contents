@@ -1,0 +1,105 @@
+library(shiny)
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(stringr)
+library(bslib)
+
+
+hb_inc <- read_csv("Data/hb_inc_clean.csv") 
+
+hbs <- unique(hb_inc$hb_name)
+
+cancer_types <- unique(hb_inc$cancer_site) 
+
+
+
+
+
+ui <- fluidPage(
+  
+ theme = bs_theme(bootswatch = "solar"),
+  
+  # ABOVE TABS ----
+  titlePanel(tags$h3("Cancer types trend in Scotland health boards")),
+  
+  
+  fluidRow(
+    
+    column(width = 6),
+    
+    column(width = 3,
+           selectInput("hb_input",
+                       tags$i("Select hb"),
+                       choices = hbs)
+    ),
+    
+    column(width = 3,
+           selectInput("type_input",
+                       tags$i("Select cancer type"),
+                       choices = cancer_types))
+  ),
+  
+  
+  fluidRow(
+    column(width = 6,
+           plotOutput("general_plot")),
+    
+    column(width = 6,
+           plotOutput("reactive_plot"))
+  ),
+ 
+ HTML("<br><br><br>"),
+ fluidRow(
+   "The first plot shows the general trend of cancer incidence for each health board in Scotland from 1997 to 2021. This is useful for giving an idea to the user of wich health board he ismore interested to analyse in more detail.",
+   HTML("<br><br>"),
+   "This more detailed analysis is possible in the second plot, where it is possible to select the specific health board and the specific cancer type of interest, and see the incidence trend of that specific cancer type in that specific health board during the period considered."
+ )
+  
+  
+)
+
+server <- function(input, output, session) {
+  
+  
+  output$general_plot <- renderPlot({
+    hb_inc %>% 
+      group_by(hb_name, year) %>% 
+      filter(cancer_site == "All cancer types") %>% 
+      summarise(incidences = sum(incidences_all_ages)) %>% 
+      ggplot()+
+      aes(x = year, y = incidences, group = hb_name, colour = hb_name)+
+      geom_line() +
+      theme(panel.grid.major = element_blank(),    #strip major gridlines
+            panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+            panel.background = element_rect(fill = 'white', color = 'lightblue'))+
+      labs(x = "\nyear",
+           y = "ratio of incidences per hb\n",
+           title = "INCIDENCE OF ALL CANCER TYPES PER HB")
+  })
+  
+  
+  output$reactive_plot <- renderPlot({
+    
+    hb_inc %>%  
+      filter(hb_name == input$hb_input, cancer_site == input$type_input) %>% 
+      group_by(cancer_site, year) %>% 
+      summarise(incidences = sum(incidences_all_ages)) %>% 
+      ggplot()+
+      aes(x = year, y = incidences, fill = cancer_site)+
+      geom_col(position = "dodge", show.legend = FALSE)+
+      theme(panel.grid.major = element_blank(),    #strip major gridlines
+            panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+            panel.background = element_rect(fill = 'white', color = 'lightblue')) +
+      labs(x = "\n year",
+           y = "cancer incidences",
+           title = "INCIDENT OF SELECTED CANCER TYPES FOR SELECTED HB")
+    
+  })
+  
+  
+  
+  
+}
+
+shinyApp(ui, server)

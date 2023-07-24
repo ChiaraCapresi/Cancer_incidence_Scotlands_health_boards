@@ -1,0 +1,282 @@
+---
+title: "Cancer rates in the borders of Scotland"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+In this little project, I am going to analyse some aspects about the incidence of cancer in the Scottish health boards, imagining to help inform the planning for provision of cancer treatment services in the Scottish borders.
+
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(stringr)
+```
+
+
+```{r}
+demographic_inc <- read_csv("Data/incidence_demographic.csv") %>% 
+  clean_names()
+
+
+hb_inc <- read_csv("Data/incidence_hb.csv") %>% 
+  clean_names()
+
+
+hb_names <- read_csv("Data/geography_codes_and_labels_hb2014_01042019(1).csv") %>% 
+  clean_names()
+```
+
+```{r}
+glimpse(demographic_inc)
+glimpse(hb_inc)
+glimpse(hb_names)
+```
+
+```{r}
+hb_inc %>% 
+  distinct(hb) 
+```
+
+
+```{r}
+hb_names %>% 
+  distinct(hb)
+```
+
+
+```{r}
+hb_names %>% 
+  distinct(hb_name)
+```
+
+
+
+```{r}
+hb_inc <- left_join(hb_inc, hb_names, by = "hb") %>% 
+  mutate(hb_name = str_sub(hb_name, start = 5))
+
+hb_inc <- hb_inc %>% 
+  select(hb, cancer_site, sex, year, incidences_all_ages, hb_name)
+```
+
+#######################################################################
+
+
+```{r}
+demographic_inc <- demographic_inc %>% 
+  pivot_longer(cols = starts_with("incidences_age"), names_to = "age_groups", values_to = "incidence_age") %>% 
+  separate(col = age_groups, into = c("one", "age"), sep = "_") %>% 
+  mutate(age = str_sub(age, start = 4)) %>% 
+  mutate(age = if_else(age == "", "Under 5", age)) 
+
+```
+
+```{r}
+demographic_inc <- demographic_inc %>% 
+  select(cancer_site, sex, year, age, incidence_age, incidences_all_ages)
+```
+
+
+
+```{r}
+demographic_inc <- demographic_inc %>% 
+  mutate(age = case_when(
+    age %in% c("Under 5", "5to9") ~ "Under 10",
+    age %in% c("10to14", "15to19", "20to24", "25to29") ~ "10 - 29",
+    age %in% c("30to34", "35to39", "40to44", "45to49") ~ "30 - 49",
+    age %in% c("50to54", "55to59", "60to64", "65to69") ~ "50 - 69",
+    age %in% c("70to74", "75to79", "80to84", "85to89", "90and") ~ "70 and over"
+  ))
+```
+
+
+
+
+
+```{r}
+demographic_inc %>% 
+  group_by(age, year) %>% 
+  summarise(incidence = sum(incidence_age)/n()) %>% 
+  ggplot()+
+  aes(x = year, y = incidence, group = age, colour = age)+
+  geom_line()
+```
+
+
+
+###############################################
+
+
+
+# Incidence per health board all ages, all cancer types 
+
+
+```{r}
+hb_inc %>% 
+  distinct(year) %>% 
+  arrange()
+```
+
+
+
+```{r}
+demographic_inc %>% 
+  distinct(year) %>% 
+  arrange()
+```
+
+
+```{r}
+demographic_inc %>% 
+  filter(cancer_site == "All cancer types") %>%
+  group_by (year) %>% 
+  summarise(incidences = sum(incidences_all_ages)/n()) %>% 
+  ggplot()+
+  aes(x = year, y = incidences)+
+  geom_line()
+```
+
+
+```{r}
+hb_inc %>% 
+  group_by(year) %>% 
+  filter(cancer_site == "All cancer types") %>% 
+  summarise(incidences = sum(incidences_all_ages)) %>% 
+  ggplot()+
+  aes(x = year, y = incidences)+
+  geom_line(colour = "cyan3", size = 1) +
+  theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+      panel.background = element_rect(fill = 'white', color = 'lightblue')) +
+  labs(x = "\nyear",
+       y = "incidences\n",
+       title = "Incidences of all cancer types in Scotland")
+```
+
+
+
+
+```{r}
+hb_inc %>% 
+  group_by(hb_name, year) %>% 
+  filter(cancer_site == "All cancer types") %>% 
+  summarise(incidences = sum(incidences_all_ages)/n()) %>% 
+  ggplot()+
+  aes(x = year, y = incidences, group = hb_name, colour = hb_name)+
+  geom_line() +
+  theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+      panel.background = element_rect(fill = 'white', color = 'lightblue'))+
+  labs(x = "\nyear",
+       y = "ratio of incidences per hb\n",
+       title = "Incidence of all cancer types per board")
+```
+
+```{r}
+most_incident_cancers <- hb_inc %>% 
+  filter(cancer_site != "All cancer types") %>%
+  group_by(cancer_site) %>% 
+  summarise(incidences = sum(incidences_all_ages)) %>% 
+  slice_max(incidences, n = 10) %>% 
+  pull(cancer_site)
+
+most_three_inc <- hb_inc %>% 
+  filter(cancer_site != "All cancer types") %>%
+  group_by(cancer_site) %>% 
+  summarise(incidences = sum(incidences_all_ages)) %>% 
+  slice_max(incidences, n = 3) %>% 
+  pull(cancer_site)
+
+
+hb_inc %>% 
+  filter(cancer_site %in% most_incident_cancers) %>% 
+  group_by(cancer_site, year) %>% 
+  summarise(incidences = sum(incidences_all_ages)/n()) %>% 
+  ggplot()+
+  aes(x = year, y = incidences, group = cancer_site, colour = cancer_site)+
+  geom_line() +
+   theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+      panel.background = element_rect(fill = 'white', color = 'lightblue'))+
+  labs(x = "\nyear",
+       y = "incidence ratio",
+       title = "Incidence ratio of most common cancer types in Scotland")
+```
+
+
+
+```{r}
+hb_inc %>%  
+  filter(hb_name == "Greater Glasgow and Clyde", cancer_site == "Non-melanoma skin cancer") %>% 
+  group_by(cancer_site, year) %>% 
+  summarise(incidences = sum(incidences_all_ages)) %>% 
+  ggplot()+
+  aes(x = year, y = incidences, fill = cancer_site)+
+  geom_col(position = "dodge", show.legend = FALSE)+
+  theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+      panel.background = element_rect(fill = 'white', color = 'lightblue')) +
+  labs(x = "\n year",
+       y = "cancer incidences",
+       title = "Incidence of cancer types on each health board")
+```
+
+
+
+
+
+
+```{r}
+hb_inc %>% 
+  filter(sex != "All") %>% 
+  group_by(hb_name, sex) %>% 
+  summarise(incidence = sum(incidences_all_ages)) %>% 
+  ggplot() +
+  aes(x = hb_name, y = incidence, fill = sex)+
+  geom_col(position = "dodge")+
+  coord_flip()
+```
+
+
+
+
+```{r}
+hb_inc %>% 
+  filter(sex != "All") %>% 
+  group_by(hb_name, sex) %>% 
+  summarise(incidence = sum(incidences_all_ages)) %>% 
+  ggplot() +
+  aes(x = hb_name, y = incidence, fill = sex)+
+  geom_col(position = "dodge")+
+  theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+      panel.background = element_rect(fill = 'white', color = 'lightblue'),
+      axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "health board",
+       y = "incidence of cancer",
+       title = "Incidence of cancer per hb depending on gender")
+```
+
+
+```{r}
+hb_inc %>% 
+  filter(sex != "All", cancer_site %in% most_three_inc) %>% 
+  group_by(hb_name, cancer_site) %>% 
+  summarise(incidence = sum(incidences_all_ages)) %>% 
+  ggplot() +
+  aes(x = hb_name, y = incidence, fill = cancer_site)+
+  geom_col(position = "dodge")+
+  theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+      panel.background = element_rect(fill = 'white', color = 'lightblue'),
+      axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+
+

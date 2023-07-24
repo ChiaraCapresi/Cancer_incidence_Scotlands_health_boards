@@ -1,0 +1,30 @@
+"0","demographic_inc <- read_csv(""Data/incidence_demographic.csv"") %>% "
+"0","  clean_names()"
+"2","[1mRows: [22m[34m3400[39m [1mColumns: [22m[34m60[39m"
+"2","[36m──[39m [1mColumn specification[22m [36m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+[1mDelimiter:[22m "",""
+[31mchr[39m (10): Country, CancerSiteICD10Code, CancerSite, Sex, SexQF, EASRLower95pcConfidenceIntervalQF, EASRUpper95pcConfidenceIntervalQF, WASR...
+[32mdbl[39m (50): Year, IncidencesAgeUnder5, IncidencesAge5To9, IncidencesAge10To14, IncidencesAge15To19, IncidencesAge20To24, IncidencesAge25To29..."
+"2","
+[36mℹ[39m Use `spec()` to retrieve the full column specification for this data.
+[36mℹ[39m Specify the column types or set `show_col_types = FALSE` to quiet this message."
+"0","hb_inc <- read_csv(""Data/incidence_hb.csv"") %>% "
+"0","  clean_names()"
+"2","[1mRows: [22m[34m47600[39m [1mColumns: [22m[34m23[39m"
+"2","[36m──[39m [1mColumn specification[22m [36m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+[1mDelimiter:[22m "",""
+[31mchr[39m  (9): HB, CancerSiteICD10Code, CancerSite, Sex, SexQF, EASRLower95pcConfidenceIntervalQF, EASRUpper95pcConfidenceIntervalQF, WASRLower...
+[32mdbl[39m (14): Year, IncidencesAllAges, CrudeRate, CrudeRateLower95pcConfidenceInterval, CrudeRateUpper95pcConfidenceInterval, EASR, EASRLower9..."
+"2","
+[36mℹ[39m Use `spec()` to retrieve the full column specification for this data.
+[36mℹ[39m Specify the column types or set `show_col_types = FALSE` to quiet this message."
+"0","hb_names <- read_csv(""Data/geography_codes_and_labels_hb2014_01042019(1).csv"") %>% "
+"0","  clean_names()"
+"2","[1mRows: [22m[34m18[39m [1mColumns: [22m[34m5[39m"
+"2","[36m──[39m [1mColumn specification[22m [36m──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[39m
+[1mDelimiter:[22m "",""
+[31mchr[39m (3): HB, HBName, Country
+[32mdbl[39m (2): HBDateEnacted, HBDateArchived"
+"2","
+[36mℹ[39m Use `spec()` to retrieve the full column specification for this data.
+[36mℹ[39m Specify the column types or set `show_col_types = FALSE` to quiet this message."

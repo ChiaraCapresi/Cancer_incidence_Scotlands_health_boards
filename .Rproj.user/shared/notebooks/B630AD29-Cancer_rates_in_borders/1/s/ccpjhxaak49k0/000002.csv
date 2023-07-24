@@ -1,0 +1,17 @@
+"1","Rows: 3400 Columns: 60── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: \",\"
+chr (10): Country, CancerSiteICD10Code, CancerSite, Sex, SexQF, EASRLower95pcConfidenceIntervalQF, EASRUpper95pcConfidenceIntervalQF, WASR...
+dbl (50): Year, IncidencesAgeUnder5, IncidencesAge5To9, IncidencesAge10To14, IncidencesAge15To19, IncidencesAge20To24, IncidencesAge25To29...
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.Rows: 47600 Columns: 23── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: \",\"
+chr  (9): HB, CancerSiteICD10Code, CancerSite, Sex, SexQF, EASRLower95pcConfidenceIntervalQF, EASRUpper95pcConfidenceIntervalQF, WASRLower...
+dbl (14): Year, IncidencesAllAges, CrudeRate, CrudeRateLower95pcConfidenceInterval, CrudeRateUpper95pcConfidenceInterval, EASR, EASRLower9...
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.Rows: 18 Columns: 5── Column specification ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: \",\"
+chr (3): HB, HBName, Country
+dbl (2): HBDateEnacted, HBDateArchived
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+"

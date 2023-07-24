@@ -1,0 +1,8 @@
+"0","hb_inc <- left_join(hb_inc, hb_names, by = ""hb"") %>% "
+"0","  mutate(hb_name = str_sub(hb_name, start = 5))"
+"0",""
+"0","hb_inc <- hb_inc %>% "
+"0","  select(hb, cancer_site, sex, year, incidences_all_ages, hb_name)"
+"0"," "
+"0",""
+"0","write_csv(hb_inc, ""Data/hb_inc_clean.csv"")"

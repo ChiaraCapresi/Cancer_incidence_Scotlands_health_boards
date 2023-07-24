@@ -1,0 +1,214 @@
+---
+title: "Cancer incidence in the borders"
+output: html_notebook
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+In this little project, I am going to analyse some aspects about the incidence of cancer in the Scottish health boards, imagining to help inform the planning for provision of cancer treatment services in the Scottish borders. The dataset I am going to use goes from 1997 to 2021.
+
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(stringr)
+```
+
+```{r}
+demographic_inc <- read_csv("Data/incidence_demographic.csv") %>% 
+  clean_names()
+
+
+hb_inc <- read_csv("Data/incidence_hb.csv") %>% 
+  clean_names()
+
+
+hb_names <- read_csv("Data/geography_codes_and_labels_hb2014_01042019(1).csv") %>% 
+  clean_names()
+```
+
+
+```{r}
+hb_inc <- left_join(hb_inc, hb_names, by = "hb") %>% 
+  mutate(hb_name = str_sub(hb_name, start = 5))
+
+hb_inc <- hb_inc %>% 
+  select(hb, cancer_site, sex, year, incidences_all_ages, hb_name)
+ 
+
+write_csv(hb_inc, "Data/hb_inc_clean.csv")
+```
+
+
+
+
+# Cancer incidence in Scotland 
+
+At first I will have a look of how the number of incidences of cancer (all cancer types) are distributed in Scotland during the period considered in the dataset.
+
+
+```{r}
+hb_inc %>% 
+  group_by(year) %>% 
+  filter(cancer_site == "All cancer types") %>% 
+  summarise(incidences = sum(incidences_all_ages)) %>% 
+  ggplot()+
+  aes(x = year, y = incidences)+
+  geom_line(colour = "cyan3", size = 1) +
+  theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey"),
+      panel.background = element_rect(fill = 'white', color = 'lightblue')) +
+  labs(x = "\nyear",
+       y = "cancer incidences\n",
+       title = "Incidences of all cancer types in Scotland")
+```
+
+from this plot it is clear that the incidence of any kind of cancer is significantly increased from 2020 to 2021. We note that there is a quite unexpected fall corresponding to the winter of 2020, but we can assume that this is due to the fact that at the beginning of Covid emergency, because of the delays in the ordinary schedule of clinical examinations, a huge number of cancer diagnosis were postponed.
+
+
+In the following we are going to have a look at how the cancer incidence over the period considered is spread in each health boards of Scotland. 
+
+
+```{r}
+hb_inc %>% 
+  group_by(hb_name, year) %>% 
+  filter(cancer_site == "All cancer types") %>% 
+  summarise(incidences = sum(incidences_all_ages), .groups = "drop") %>% 
+  ggplot()+
+  aes(x = year, y = incidences, group = hb_name, colour = hb_name)+
+  geom_line() +
+  theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+      panel.background = element_rect(fill = 'white', color = 'lightblue'))+
+  labs(x = "\nyear",
+       y = "ratio of incidences per hb\n",
+       title = "Incidence of all cancer types per board")
+
+```
+
+From this plot it is clear that the areas where the highest numbers of cancer incidences is registered are those of Glasgow and Edinburgh, which could be easily explained if we think that these areas are those where most of the population is concentrated and the health points/hospitals are supposed to be more "advanced" also in terms of diagnostic machines.
+
+
+# Most common cancer types incidence per hb 
+
+
+```{r}
+most_incident_cancers <- hb_inc %>% 
+  filter(cancer_site != "All cancer types") %>%
+  group_by(cancer_site) %>% 
+  summarise(incidences = sum(incidences_all_ages)) %>% 
+  slice_max(incidences, n = 10) %>% 
+  pull(cancer_site)
+
+most_three_inc <- hb_inc %>% 
+  filter(cancer_site != "All cancer types") %>%
+  group_by(cancer_site) %>% 
+  summarise(incidences = sum(incidences_all_ages)) %>% 
+  slice_max(incidences, n = 4) %>% 
+  pull(cancer_site)
+
+
+hb_inc %>% 
+  filter(cancer_site %in% most_incident_cancers) %>% 
+  group_by(cancer_site, year) %>% 
+  summarise(incidences = sum(incidences_all_ages), .groups = "drop") %>% 
+  ggplot()+
+  aes(x = year, y = incidences, group = cancer_site, colour = cancer_site)+
+  geom_line() +
+   theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+      panel.background = element_rect(fill = 'white', color = 'lightblue'))+
+  labs(x = "\nyear",
+       y = "cancer type incidence\n",
+       title = "Incidence ratio of most common cancer types in Scotland")
+```
+
+
+In this first plot we can see the 10 most common types in Scotland. as we can see, the top two seems to follow at trend which is quite similar to those registered for the general analysis (that one for all cancer types). All the others seems to have a more regular trend over time. Who is interested in this kind of analysis should wonder if there is any medical reason for which skin cancers seems to follow a more increasing trend with respect of the others.
+
+Let's have a look now of the incidence per health board of the four most common cancer's types.
+
+
+
+```{r}
+hb_inc %>% 
+  filter(sex != "All", cancer_site %in% most_three_inc) %>% 
+  group_by(hb_name, cancer_site) %>% 
+  summarise(incidence = sum(incidences_all_ages), .groups = "drop") %>% 
+  ggplot() +
+  aes(x = hb_name, y = incidence, fill = cancer_site)+
+  geom_col(position = "dodge")+
+  theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+      panel.background = element_rect(fill = 'white', color = 'lightblue'),
+      axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "health board",
+       y = "cancer incidence per type\n",
+       title = "Four most common cancer types in Scottish health boards")
+```
+what we can see here is that how we expected the "Non-melanoma skin" cancer seems to have the highest incidence in all the hbs, followed by the "basal cell carcinoma of the skin", while the other two types seems to have a more similar incidence which is also quite lower with respect to the other two.
+
+
+# Cancer incidence per hb depending on sex
+
+
+```{r}
+hb_inc %>% 
+  filter(sex != "All") %>% 
+  group_by(hb_name, sex) %>% 
+  summarise(incidence = sum(incidences_all_ages), .groups = "drop") %>% 
+  ggplot() +
+  aes(x = hb_name, y = incidence, fill = sex)+
+  geom_col(position = "dodge")+
+  theme(panel.grid.major = element_blank(),    #strip major gridlines
+      panel.grid.minor = element_line(colour = "lightgrey", size = 0.25),
+      panel.background = element_rect(fill = 'white', color = 'lightblue'),
+      axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "health board",
+       y = "incidence of cancer\n",
+       title = "Incidence of cancer per hb depending on gender")
+```
+
+This plot show the distribution of cancer (all types) in each health board depending on people gender.
+It seems that, generally speaking, there is not a significant difference between genders, even if for many health boards, especially those with higher total incidence (that maybe could be considered more representative!?) it seems that the incidence of cancer on females is just a bit higher than on males. 
+
+
+
+# Conclusions
+
+- First of all we notices that, generally speaking the incidence of cancer is increased, unfortunately, among Scotland from 1997 to 2021 with a deep fall in winter 2020 maybe due to the pandemic.
+
+- This trend is, in general, shown also distinguishing among different health boards, especially on the most populated areas, like Glasgow and Edinburgh, which can be considered maybe more representative both for the higher number of people living there and also because they are supposed to be more "advanced" also in terms of diagnostic machines.
+
+
+- We noticed that the two most common cancer types registered in Scotland are "Non-melanoma skin" cancer and "basal cell carcinoma of the skin" cancer, followed by all the others, starting from "Trachea, bronchus and lung" cancer and "Breast" cancer. The first two seems to have an increasing incidence trend, more similar to the general trend of Scotland for all cancer types, while the others seems to be more regular over time. This makes me think that the increasing of cancer incidence in Scotland over this period is mainly due mostly to the increase of these two particular types.
+
+
+- If we have a look to the incidence of the four most common cancer types in each board, we can see that the trend is almost the same we just described for the entire Scotland.
+
+
+- Finally we had a look of cancer incidence per each board depending on people gender. It seems that there is not significant differences between genders. The only think I noticed is that in the areas where the incidence is higher in general (which can be considered more representative maybe), it seems that the cancer incidence is roughly higher among females than among males. But it is just a matter of a very little difference.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

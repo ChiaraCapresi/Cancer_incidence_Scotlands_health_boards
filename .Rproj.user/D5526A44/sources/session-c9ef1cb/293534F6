@@ -1,0 +1,29 @@
+{
+    "id": "293534F6",
+    "path": "C:/Users/chiar/codeclan/Cancer_incidence_Scotlands_health_boards/cancer_scotland_health_boards_report.Rmd",
+    "project_path": "cancer_scotland_health_boards_report.Rmd",
+    "type": "r_markdown",
+    "hash": "1793936629",
+    "contents": "",
+    "dirty": false,
+    "created": 1690222876695.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "tempName": "Untitled1",
+        "chunk_output_type": "inline",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "214,0",
+        "scrollLine": "192",
+        "last_setup_crc32": "c9ef1cbc4e2d899"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1690223000,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1690223000650,
+    "read_only": false,
+    "read_only_alternatives": []
+}
